@@ -1,0 +1,1 @@
+export const DELIVER_ORDER_TIMEOUT = 30 * 1000;

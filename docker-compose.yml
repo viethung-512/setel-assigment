@@ -1,0 +1,64 @@
+version: '3.3'
+services:
+  setel-gateway:
+    build: ./gateway
+    container_name: setel-gateway
+    restart: always
+    ports:
+      - '8000:8000'
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+      - setel-orders
+      - setel-payments
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://${PAYMENT_SERVICE_HOST}:8002']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    # network_mode: host
+
+  setel-orders:
+    build: ./orders
+    container_name: setel-orders
+    hostname: ${ORDER_SERVICE_HOST}
+    restart: always
+    env_file:
+      - .env
+    # depends_on:
+    #   - mongodb
+    # network_mode: host
+
+  setel-payments:
+    build: ./payments
+    container_name: setel-payments
+    hostname: ${PAYMENT_SERVICE_HOST}
+    restart: always
+    env_file:
+      - .env
+    # network_mode: host
+
+  setel-client:
+    build: ./client
+    container_name: setel-client
+    ports:
+      - '9000:80'
+    env_file:
+      - .env
+  #   # network_mode: host
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    ports:
+      - '27017:27017'
+    volumes:
+      - '$PWD/deploy/db/data:/data/db:z'
+      - '$PWD/deploy/db/mongod.conf:/etc/mongod.conf:z'
+    command: [--auth]
+    # network_mode: host
